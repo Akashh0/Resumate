@@ -19,20 +19,37 @@ def extract_resume_text(path):
 
 def extract_info(text):
     info = {}
+
     info["email"] = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.\w+", text)
     info["phone"] = re.findall(r"\+?\d[\d\s\-()]{8,15}", text)
 
-    doc = nlp(text)
-    names = [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
-    info["name"] = names[0] if names else "Not Found"
+    # 🔍 Name Extraction - Improved
+    lines = text.strip().split("\n")
+    top_block = "\n".join(lines[:15])  # Focus on top of resume
 
+    doc = nlp(top_block)
+    person_names = [ent.text.strip() for ent in doc.ents if ent.label_ == "PERSON"]
+
+    # Check if any look like valid name (not location or numeric)
+    filtered_names = [name for name in person_names if len(name.split()) >= 2 and not any(char.isdigit() for char in name)]
+
+    # 🌟 Final fallback: All-uppercase line with 2+ words, from top few lines
+    fallback_upper = next((line.strip() for line in lines[:10]
+                          if line.strip().isupper() and len(line.split()) >= 2), None)
+
+    info["name"] = filtered_names[0] if filtered_names else (fallback_upper or "Not Found")
+
+    # 🛠 Skill Matching
     skills_list = ["python", "django", "react", "sql", "ml", "nlp", "html", "css", "javascript", "git"]
-    info["skills"] = [word for word in skills_list if word in text.lower()]
+    info["skills"] = [skill for skill in skills_list if skill in text.lower()]
 
-    edu_keywords = ["b.tech", "m.tech", "bachelor", "master", "degree", "graduation"]
+    # 🎓 Education Check
+    edu_keywords = ["b.tech", "m.tech", "bachelor", "master", "degree", "graduation", "university", "10th", "12th"]
     info["education"] = "Yes" if any(word in text.lower() for word in edu_keywords) else "Not Found"
 
     return info
+
+
 
 def generate_feedback(text, info):
     feedback = []
