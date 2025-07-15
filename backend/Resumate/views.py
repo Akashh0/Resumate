@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import RegisterSerializer, LoginSerializer
 from .resume_parser import extract_resume_text
+from .resume_parser import extract_resume_text, extract_info, generate_feedback
 import os
 
 class RegisterView(APIView):
@@ -44,7 +45,6 @@ class UploadResumeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        from .resume_parser import extract_resume_text, extract_info, generate_feedback
 
         resume = request.FILES.get('resume')
         if not resume:
