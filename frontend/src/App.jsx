@@ -2,7 +2,6 @@ import React from 'react';
 import NavBar from './components/NavBar';
 import AuthProvider from './components/context/AuthContext';
 import ResumeUpload from './components/ResumeUpload';
-import ResumeAnalysisCard from './components/ResumeAnalysisCard';
 
 export default function App() {
   return (
