@@ -1,0 +1,120 @@
+.upload-container {
+  border: 2px dashed #4f46e5;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  background-color: #f9fafb;
+  color: #333;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+  position: relative;
+  /* cursor removed here */
+  width: 100%;
+  max-width: 1900px;
+  margin: 0px auto;
+}
+
+.upload-container.drag-active {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+
+.upload-label {
+  display: block;
+  cursor: pointer; /* Only label is clickable */
+}
+
+/* Upload content styles */
+.upload-content p {
+  margin: 0.5rem 0;
+  font-size: 16px;
+}
+
+.or {
+  color: #999;
+}
+
+.browse-btn {
+  background-color: #4f46e5;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  transition: 0.3s ease;
+  margin-top: 10px;
+  cursor: pointer; /* keep this */
+}
+
+.browse-btn:hover {
+  background-color: #3730a3;
+}
+
+/* File name display */
+.file-name {
+  margin-top: 12px;
+  font-weight: 500;
+  color: #111827;
+  font-size: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 80%;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* File display container with remove button */
+.file-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Remove button styling */
+.remove-btn {
+  background: #ef4444; /* Tailwind red-500 */
+  border: none;
+  color: white;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 10px;
+  border-radius: 20%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.remove-btn:hover {
+  background-color: #b91c1c; /* Tailwind red-700 */
+}
+
+@media (max-width: 480px) {
+  .upload-container {
+    padding: 20px;
+  }
+
+  .upload-content p {
+    font-size: 14px;
+  }
+
+  .browse-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .file-name {
+    font-size: 14px;
+    max-width: 70%;
+  }
+
+  .file-display {
+    gap: 8px;
+  }
+
+  .remove-btn {
+    font-size: 18px;
+    padding: 0 8px;
+  }
+}
