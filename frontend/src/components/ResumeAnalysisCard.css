@@ -1,0 +1,47 @@
+.resume-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  padding: 2rem;
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 700px;
+  transition: transform 0.3s ease;
+}
+.resume-card:hover {
+  transform: scale(1.01);
+}
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 1rem;
+}
+.subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #444;
+}
+.section {
+  margin-bottom: 1.5rem;
+}
+.resume-card ul {
+  list-style: none;
+  padding-left: 0;
+}
+.resume-card li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+.resume-card li.ok svg {
+  color: #1ab65c;
+}
+.resume-card li.warn svg {
+  color: #ff7f50;
+}
+.resume-card li span {
+  line-height: 1.4;
+}

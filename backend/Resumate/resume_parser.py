@@ -36,15 +36,28 @@ def extract_info(text):
 
 def generate_feedback(text, info):
     feedback = []
-    if "github" not in text.lower() and "portfolio" not in text.lower():
-        feedback.append("Consider adding a GitHub or Portfolio link.")
-    if len(text.split()) < 150:
-        feedback.append("Resume seems short. Try elaborating your experience or skills.")
-    if info["education"] == "Not Found":
-        feedback.append("Education section is missing or unclear.")
 
-    labels = ["Software Engineer", "Data Scientist", "Web Developer"]
-    bert_result = bert_classifier(text, labels)
-    feedback.append(f"Resume aligns best with: {bert_result['labels'][0]}")
+    try:
+        if "github" not in text.lower() and "portfolio" not in text.lower():
+            feedback.append("Consider adding a GitHub or Portfolio link.")
+
+        if len(text.split()) < 150:
+            feedback.append("Resume seems short. Try elaborating your experience or skills.")
+
+        if info.get("education") == "Not Found":
+            feedback.append("Education section is missing or unclear.")
+
+        print("DEBUG: Running BERT classification...")
+        labels = ["Software Engineer", "Data Scientist", "Web Developer"]
+        bert_result = bert_classifier(text, labels)
+        print("DEBUG: BERT Result", bert_result)
+
+        if bert_result.get("labels"):
+            feedback.append(f"Resume aligns best with: {bert_result['labels'][0]}")
+
+    except Exception as e:
+        print("❌ Feedback generation error:", str(e))
+        feedback.append("Feedback generation failed.")
 
     return feedback
+

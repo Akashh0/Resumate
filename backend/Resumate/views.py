@@ -45,7 +45,6 @@ class UploadResumeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-
         resume = request.FILES.get('resume')
         if not resume:
             return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
@@ -63,6 +62,11 @@ class UploadResumeView(APIView):
             info = extract_info(text)
             feedback = generate_feedback(text, info)
 
+            # ✅ Proper debug logs
+            print("DEBUG: Info", info)
+            print("DEBUG: Text Word Count", len(text.split()))
+            print("DEBUG: Feedback", feedback)
+
             os.remove(temp_file_path)
 
             return Response({
@@ -76,4 +80,5 @@ class UploadResumeView(APIView):
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
