@@ -1,0 +1,48 @@
+/* Title.css */
+
+.title-text {
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+  animation: fadeIn 1s ease-in;
+}
+
+.title-text h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.title-text p {
+  font-size: 1.1rem;
+  color: #555;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Optional animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive tweak */
+@media (max-width: 600px) {
+  .title-text h1 {
+    font-size: 2rem;
+  }
+
+  .title-text p {
+    font-size: 1rem;
+  }
+}
