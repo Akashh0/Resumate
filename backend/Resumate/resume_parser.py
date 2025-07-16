@@ -1,15 +1,18 @@
-# Resumate/resume_parser.py
+# resume_parser.py
 
-import pdfplumber
-import docx2txt
 import re
-import spacy
 from transformers import pipeline
 
-nlp = spacy.load("en_core_web_sm")
-bert_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+# Named Entity Recognition (NER) pipeline for extracting name
+ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", grouped_entities=True)
+
+# Zero-shot classification for predicting resume type
+classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
 def extract_resume_text(path):
+    import pdfplumber
+    import docx2txt
+
     if path.endswith('.pdf'):
         with pdfplumber.open(path) as pdf:
             return "\n".join(page.extract_text() or "" for page in pdf.pages)
@@ -20,61 +23,51 @@ def extract_resume_text(path):
 def extract_info(text):
     info = {}
 
+    # Extract email
     info["email"] = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.\w+", text)
+
+    # Extract phone numbers
     info["phone"] = re.findall(r"\+?\d[\d\s\-()]{8,15}", text)
 
-    # 🔍 Name Extraction - Improved
-    lines = text.strip().split("\n")
-    top_block = "\n".join(lines[:15])  # Focus on top of resume
+    # Extract name using BERT NER
+    name = "Not Found"
+    entities = ner_pipeline(text[:1000])  # limit input for speed
+    for ent in entities:
+        if ent["entity_group"] == "PER":
+            name = ent["word"].replace("##", "")
+            break
+    info["name"] = name
 
-    doc = nlp(top_block)
-    person_names = [ent.text.strip() for ent in doc.ents if ent.label_ == "PERSON"]
-
-    # Check if any look like valid name (not location or numeric)
-    filtered_names = [name for name in person_names if len(name.split()) >= 2 and not any(char.isdigit() for char in name)]
-
-    # 🌟 Final fallback: All-uppercase line with 2+ words, from top few lines
-    fallback_upper = next((line.strip() for line in lines[:10]
-                          if line.strip().isupper() and len(line.split()) >= 2), None)
-
-    info["name"] = filtered_names[0] if filtered_names else (fallback_upper or "Not Found")
-
-    # 🛠 Skill Matching
-    skills_list = ["python", "django", "react", "sql", "ml", "nlp", "html", "css", "javascript", "git"]
+    # Extract skills from known list
+    skills_list = [
+        "python", "java", "c++", "html", "css", "javascript", "react",
+        "node", "django", "flask", "sql", "mongodb", "nlp", "machine learning"
+    ]
     info["skills"] = [skill for skill in skills_list if skill in text.lower()]
 
-    # 🎓 Education Check
-    edu_keywords = ["b.tech", "m.tech", "bachelor", "master", "degree", "graduation", "university", "10th", "12th"]
+    # Check if education keywords exist
+    edu_keywords = ["b.tech", "m.tech", "bachelor", "master", "degree", "graduation", "university", "college"]
     info["education"] = "Yes" if any(word in text.lower() for word in edu_keywords) else "Not Found"
 
     return info
 
-
-
 def generate_feedback(text, info):
     feedback = []
 
-    try:
-        if "github" not in text.lower() and "portfolio" not in text.lower():
-            feedback.append("Consider adding a GitHub or Portfolio link.")
+    if not any(x in text.lower() for x in ["github", "portfolio", "linkedin"]):
+        feedback.append("Consider adding a GitHub, Portfolio or LinkedIn link.")
 
-        if len(text.split()) < 150:
-            feedback.append("Resume seems short. Try elaborating your experience or skills.")
+    if len(text.split()) < 150:
+        feedback.append("Your resume is quite short — add more content.")
 
-        if info.get("education") == "Not Found":
-            feedback.append("Education section is missing or unclear.")
+    if info.get("education") == "Not Found":
+        feedback.append("Education section is missing or unclear.")
 
-        print("DEBUG: Running BERT classification...")
-        labels = ["Software Engineer", "Data Scientist", "Web Developer"]
-        bert_result = bert_classifier(text, labels)
-        print("DEBUG: BERT Result", bert_result)
+    # Predict job alignment using BERT
+    labels = ["Software Engineer", "Data Scientist", "Web Developer", "UI/UX Designer"]
+    result = classifier(text[:1024], labels)
 
-        if bert_result.get("labels"):
-            feedback.append(f"Resume aligns best with: {bert_result['labels'][0]}")
-
-    except Exception as e:
-        print("❌ Feedback generation error:", str(e))
-        feedback.append("Feedback generation failed.")
+    if result.get("labels"):
+        feedback.append(f"Resume aligns best with: {result['labels'][0]}")
 
     return feedback
-

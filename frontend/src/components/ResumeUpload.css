@@ -90,6 +90,42 @@
   background-color: #b91c1c; /* Tailwind red-700 */
 }
 
+.loading-spinner {
+  margin-top: 2rem;
+  text-align: center;
+  color: #333;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 6px solid #e0e0e0;
+  border-top-color: #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lottie-loader {
+  margin-top: 2rem;
+  text-align: center;
+  font-weight: 500;
+  color: #222;
+}
+.lottie-loader p {
+  margin-top: -1rem;
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+
 @media (max-width: 480px) {
   .upload-container {
     padding: 20px;

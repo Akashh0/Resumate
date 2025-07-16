@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import './ResumeUpload.css';
-import ResumeAnalysisCard from './ResumeAnalysisCard'; // 🔁 Import your component
+import ResumeAnalysisCard from './ResumeAnalysisCard';
+import { Player } from '@lottiefiles/react-lottie-player'; // ✅ Import Lottie Player
+import loadingAnimation from '../assets/loading.json'; // ✅ Make sure path is correct
 
 export default function ResumeUpload({ onFileUpload }) {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(null);
-  const [resumeData, setResumeData] = useState(null); // ✅ NEW STATE
+  const [resumeData, setResumeData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -52,6 +55,7 @@ export default function ResumeUpload({ onFileUpload }) {
 
     const formData = new FormData();
     formData.append('resume', file);
+    setLoading(true);
 
     fetch('http://127.0.0.1:8000/api/upload-resume/', {
       method: 'POST',
@@ -62,15 +66,15 @@ export default function ResumeUpload({ onFileUpload }) {
     })
       .then((res) => res.json())
       .then((data) => {
+        setLoading(false);
         if (data.text) {
-          console.log("✅ Resume Parsed Successfully");
-          console.log(data.text);
-          setResumeData({ info: data.info, feedback: data.feedback }); // ✅ Set the state
+          setResumeData({ info: data.info, feedback: data.feedback });
         } else {
           alert(data.error || "Something went wrong while parsing.");
         }
       })
       .catch((err) => {
+        setLoading(false);
         console.error("❌ Upload Error:", err);
         alert("Upload failed. Please try again.");
       });
@@ -78,7 +82,7 @@ export default function ResumeUpload({ onFileUpload }) {
 
   const removeFile = () => {
     setFile(null);
-    setResumeData(null); // ✅ Clear analysis when file removed
+    setResumeData(null);
     if (onFileUpload) onFileUpload(null);
   };
 
@@ -120,7 +124,19 @@ export default function ResumeUpload({ onFileUpload }) {
         </label>
       </div>
 
-      {resumeData && (
+      {loading && (
+        <div className="lottie-loader">
+          <Player
+            autoplay
+            loop
+            src={loadingAnimation}
+            style={{ height: '200px', width: '200px' }}
+          />
+          <p>Analyzing your resume...</p>
+        </div>
+      )}
+
+      {!loading && resumeData && (
         <ResumeAnalysisCard info={resumeData.info} feedback={resumeData.feedback} />
       )}
     </>
