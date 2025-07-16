@@ -3,6 +3,11 @@
 import re
 from transformers import pipeline
 
+from transformers import pipeline
+
+bert_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
+
 # Named Entity Recognition (NER) pipeline for extracting name
 ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", grouped_entities=True)
 
@@ -54,20 +59,52 @@ def extract_info(text):
 def generate_feedback(text, info):
     feedback = []
 
-    if not any(x in text.lower() for x in ["github", "portfolio", "linkedin"]):
-        feedback.append("Consider adding a GitHub, Portfolio or LinkedIn link.")
+    try:
+        # GitHub / Portfolio Check
+        if "github" not in text.lower() and "portfolio" not in text.lower():
+            feedback.append(
+                "🔗 Consider adding a GitHub or personal portfolio link to showcase your projects and technical skills. Recruiters value real-world proof of your work."
+            )
 
-    if len(text.split()) < 150:
-        feedback.append("Your resume is quite short — add more content.")
+        # Word Count Check
+        word_count = len(text.split())
+        if word_count < 150:
+            feedback.append(
+                f"📄 Your resume has only {word_count} words. It feels too brief. Aim for 250–500 words to describe your roles, achievements, skills, and projects more thoroughly."
+            )
 
-    if info.get("education") == "Not Found":
-        feedback.append("Education section is missing or unclear.")
+        # Education Check
+        if info.get("education") == "Not Found":
+            feedback.append(
+                "🎓 Your resume lacks a clear education section. Include your degrees, institutions, and graduation years. Education often forms a baseline filter for recruiters."
+            )
 
-    # Predict job alignment using BERT
-    labels = ["Software Engineer", "Data Scientist", "Web Developer", "UI/UX Designer"]
-    result = classifier(text[:1024], labels)
+        # Skill Depth Check
+        if len(info.get("skills", [])) < 3:
+            feedback.append(
+                "🛠️ You’ve listed very few technical skills. Consider adding tools, languages, frameworks, or certifications that match your target job role."
+            )
 
-    if result.get("labels"):
-        feedback.append(f"Resume aligns best with: {result['labels'][0]}")
+        # Name Check
+        if info.get("name") == "Not Found":
+            feedback.append(
+                "🧾 Your name couldn't be confidently detected. Ensure it's prominently placed at the top, ideally in bold or large font. It's the first thing recruiters look for."
+            )
+
+        # Classification using BERT
+        labels = ["Software Engineer", "Data Scientist", "Web Developer"]
+        bert_result = bert_classifier(text, labels)
+
+        if bert_result.get("labels"):
+            best_fit = bert_result["labels"][0]
+            confidence = round(bert_result["scores"][0] * 100, 1)
+            feedback.append(
+                f"✅ Based on your content, your resume aligns best with a **{best_fit}** role ({confidence}% confidence). Tailor your resume toward this path if applicable."
+            )
+
+    except Exception as e:
+        print("❌ Feedback generation error:", str(e))
+        feedback.append("⚠️ Feedback generation failed. Try again or check the input.")
 
     return feedback
+
