@@ -68,7 +68,6 @@ export default function ResumeUpload({ onFileUpload }) {
       .then((data) => {
         setLoading(false);
         if (data.text) {
-          // ✅ Send all fields to analysis page
           navigate('/analysis', {
             state: {
               info: data.info || {},
@@ -76,8 +75,8 @@ export default function ResumeUpload({ onFileUpload }) {
               score: data.score || 0,
               alignment: data.alignment || '',
               issues: data.issues || [],
-              strengths: data.strengths || [],
-              improvementTips: data.improvementTips || [],
+              suggestions: data.improvementTips || [],
+              positives: data.strengths || [],
               scoreReview: data.scoreReview || '',
             },
           });
