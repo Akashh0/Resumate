@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import './ResumeUpload.css';
-import ResumeAnalysisCard from './ResumeAnalysisCard';
-import { Player } from '@lottiefiles/react-lottie-player'; // ✅ Import Lottie Player
-import loadingAnimation from '../assets/loading.json'; // ✅ Make sure path is correct
+import { useNavigate } from 'react-router-dom';
+import { Player } from '@lottiefiles/react-lottie-player';
+import loadingAnimation from '../assets/loading.json';
 
 export default function ResumeUpload({ onFileUpload }) {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(null);
-  const [resumeData, setResumeData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); // ✅
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -68,7 +68,13 @@ export default function ResumeUpload({ onFileUpload }) {
       .then((data) => {
         setLoading(false);
         if (data.text) {
-          setResumeData({ info: data.info, feedback: data.feedback });
+          // ✅ Redirect to new page and pass data
+          navigate('/analysis', {
+            state: {
+              info: data.info,
+              feedback: data.feedback,
+            },
+          });
         } else {
           alert(data.error || "Something went wrong while parsing.");
         }
@@ -82,7 +88,6 @@ export default function ResumeUpload({ onFileUpload }) {
 
   const removeFile = () => {
     setFile(null);
-    setResumeData(null);
     if (onFileUpload) onFileUpload(null);
   };
 
@@ -134,10 +139,6 @@ export default function ResumeUpload({ onFileUpload }) {
           />
           <p>Analyzing your resume...</p>
         </div>
-      )}
-
-      {!loading && resumeData && (
-        <ResumeAnalysisCard info={resumeData.info} feedback={resumeData.feedback} />
       )}
     </>
   );

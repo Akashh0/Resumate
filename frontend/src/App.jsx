@@ -1,17 +1,22 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import AuthProvider from './components/context/AuthContext';
 import ResumeUpload from './components/ResumeUpload';
-import Title from './Title';
 import ResumeHero from './components/ResumeHero';
+import ResumeAnalysisPage from './components/ResumeAnalysisPage'; // ✅ Use this as a page
 
 export default function App() {
   return (
-    <>
     <AuthProvider>
-      <NavBar />
-      <ResumeHero />
+      <Router>
+        <NavBar />
+        <Routes>
+          <Route path="/" element={<ResumeHero />} />
+          <Route path="/upload" element={<ResumeUpload />} />
+          <Route path="/analysis" element={<ResumeAnalysisPage />} /> 
+        </Routes>
+      </Router>
     </AuthProvider>
-    </>  
-);
+  );
 }

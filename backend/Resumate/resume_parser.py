@@ -1,18 +1,9 @@
-# resume_parser.py
-
 import re
 from transformers import pipeline
 
-from transformers import pipeline
-
-bert_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-
-
-# Named Entity Recognition (NER) pipeline for extracting name
+# Load transformers pipelines
 ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", grouped_entities=True)
-
-# Zero-shot classification for predicting resume type
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+bert_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
 def extract_resume_text(path):
     import pdfplumber
@@ -27,84 +18,115 @@ def extract_resume_text(path):
 
 def extract_info(text):
     info = {}
-
-    # Extract email
     info["email"] = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.\w+", text)
-
-    # Extract phone numbers
     info["phone"] = re.findall(r"\+?\d[\d\s\-()]{8,15}", text)
 
-    # Extract name using BERT NER
+    # NER for name
     name = "Not Found"
-    entities = ner_pipeline(text[:1000])  # limit input for speed
-    for ent in entities:
+    for ent in ner_pipeline(text[:1000]):
         if ent["entity_group"] == "PER":
             name = ent["word"].replace("##", "")
             break
     info["name"] = name
 
-    # Extract skills from known list
     skills_list = [
         "python", "java", "c++", "html", "css", "javascript", "react",
         "node", "django", "flask", "sql", "mongodb", "nlp", "machine learning"
     ]
-    info["skills"] = [skill for skill in skills_list if skill in text.lower()]
+    info["skills"] = [s for s in skills_list if s in text.lower()]
 
-    # Check if education keywords exist
     edu_keywords = ["b.tech", "m.tech", "bachelor", "master", "degree", "graduation", "university", "college"]
-    info["education"] = "Yes" if any(word in text.lower() for word in edu_keywords) else "Not Found"
-
+    info["education"] = "Yes" if any(k in text.lower() for k in edu_keywords) else "Not Found"
     return info
 
 def generate_feedback(text, info):
     feedback = []
+    if "github" not in text.lower() and "portfolio" not in text.lower():
+        feedback.append("🔗 Consider adding a GitHub or personal portfolio link.")
 
+    if len(text.split()) < 150:
+        feedback.append(f"📄 Resume has only {len(text.split())} words. Aim for 250–500 words.")
+
+    if info.get("education") == "Not Found":
+        feedback.append("🎓 Education section is missing.")
+
+    if len(info.get("skills", [])) < 3:
+        feedback.append("🛠️ Too few technical skills listed.")
+
+    if info.get("name") == "Not Found":
+        feedback.append("🧾 Name not confidently detected.")
+
+    # Role classification
     try:
-        # GitHub / Portfolio Check
-        if "github" not in text.lower() and "portfolio" not in text.lower():
-            feedback.append(
-                "🔗 Consider adding a GitHub or personal portfolio link to showcase your projects and technical skills. Recruiters value real-world proof of your work."
-            )
-
-        # Word Count Check
-        word_count = len(text.split())
-        if word_count < 150:
-            feedback.append(
-                f"📄 Your resume has only {word_count} words. It feels too brief. Aim for 250–500 words to describe your roles, achievements, skills, and projects more thoroughly."
-            )
-
-        # Education Check
-        if info.get("education") == "Not Found":
-            feedback.append(
-                "🎓 Your resume lacks a clear education section. Include your degrees, institutions, and graduation years. Education often forms a baseline filter for recruiters."
-            )
-
-        # Skill Depth Check
-        if len(info.get("skills", [])) < 3:
-            feedback.append(
-                "🛠️ You’ve listed very few technical skills. Consider adding tools, languages, frameworks, or certifications that match your target job role."
-            )
-
-        # Name Check
-        if info.get("name") == "Not Found":
-            feedback.append(
-                "🧾 Your name couldn't be confidently detected. Ensure it's prominently placed at the top, ideally in bold or large font. It's the first thing recruiters look for."
-            )
-
-        # Classification using BERT
         labels = ["Software Engineer", "Data Scientist", "Web Developer"]
-        bert_result = bert_classifier(text, labels)
-
-        if bert_result.get("labels"):
-            best_fit = bert_result["labels"][0]
-            confidence = round(bert_result["scores"][0] * 100, 1)
-            feedback.append(
-                f"✅ Based on your content, your resume aligns best with a **{best_fit}** role ({confidence}% confidence). Tailor your resume toward this path if applicable."
-            )
-
-    except Exception as e:
-        print("❌ Feedback generation error:", str(e))
-        feedback.append("⚠️ Feedback generation failed. Try again or check the input.")
+        result = bert_classifier(text, labels)
+        if result and result.get("labels"):
+            best_fit = result["labels"][0]
+            confidence = round(result["scores"][0] * 100, 1)
+            feedback.append(f"✅ Resume aligns best with **{best_fit}** ({confidence}% confidence).")
+    except Exception:
+        feedback.append("⚠️ Role classification failed.")
 
     return feedback
 
+def analyze_resume(text):
+    info = extract_info(text)
+    feedback = generate_feedback(text, info)
+
+    score = 100
+    deductions = 0
+    issues = []
+
+    if "🔗" in "".join(feedback):
+        deductions += 15
+        issues.append({
+            "title": "Portfolio or GitHub Link Missing",
+            "type": "critical",
+            "description": "Add a GitHub or portfolio link to highlight your projects."
+        })
+
+    if "📄" in "".join(feedback):
+        deductions += 10
+        issues.append({
+            "title": "Resume Too Short",
+            "type": "moderate",
+            "description": "Your resume should be between 250–500 words."
+        })
+
+    if "🎓" in "".join(feedback):
+        deductions += 15
+        issues.append({
+            "title": "Education Section Missing",
+            "type": "critical",
+            "description": "List your degree, university, and graduation year."
+        })
+
+    if "🛠️" in "".join(feedback):
+        deductions += 10
+        issues.append({
+            "title": "Lacks Technical Skills",
+            "type": "moderate",
+            "description": "Add more relevant tools, frameworks, or technologies."
+        })
+
+    if "🧾" in "".join(feedback):
+        deductions += 5
+        issues.append({
+            "title": "Name Not Detected",
+            "type": "low",
+            "description": "Ensure your name is clearly placed at the top of the resume."
+        })
+
+    # Classification
+    alignment = next((f for f in feedback if f.startswith("✅")), "No clear classification found.")
+
+    score -= deductions
+    score = max(0, score)
+
+    return {
+        "info": info,
+        "feedback": feedback,
+        "score": score,
+        "alignment": alignment,
+        "issues": issues
+    }

@@ -53,13 +53,15 @@
 
 /* Fix image so it NEVER moves */
 .hero-right {
-  position: absolute; /* 👈 LOCK to screen */
+  position: absolute; /* ✨ fixed inside hero-wrapper */
   top: 50%;
   right: -100px;
-  transform: translateY(-50%);
+  transform: translateY(-45%);
   z-index: 1;
   pointer-events: none;
+  height: 100%; /* lock vertical space */
 }
+
 
 .floating-image {
   height: 700px;

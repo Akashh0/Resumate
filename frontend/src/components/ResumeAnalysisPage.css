@@ -1,0 +1,28 @@
+/* ResumeAnalysisPage.css */
+
+.analysis-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e1e2f, #2c3e50);
+  padding: 0rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  color: white;
+}
+
+.back-button {
+  margin-top: 2rem;
+  padding: 10px 20px;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #7c3aed;
+}

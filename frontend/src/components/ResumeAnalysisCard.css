@@ -1,49 +1,158 @@
-.resume-card {
-  background: #ffffff;
-  border-radius: 16px;
-  color: black;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+/* Container */
+.analysis-container {
+  max-width: 1000px;
+  margin: 3rem auto;
   padding: 2rem;
-  margin: 2rem auto; /* ✨ centers horizontally */
-  width: 100%;
-  max-width: 700px;
-  transition: transform 0.3s ease;
+  background: linear-gradient(to bottom right, #1e293b, #334155);
+  color: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  animation: fadeIn 0.6s ease;
 }
 
-.resume-card:hover {
-  transform: scale(1.01);
+/* Score Box */
+.score-box {
+  text-align: center;
 }
-.title {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #000000;
+.score-title {
+  font-size: 1.5rem;
   margin-bottom: 1rem;
+  font-weight: 600;
 }
-.subtitle {
-  font-size: 1.2rem;
+.score-circle {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  border: 8px solid #10b981;
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f172a;
+  transition: border-color 0.3s ease;
+}
+
+/* Info Section */
+.info-section {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+.section-title {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.info-section ul li {
   margin-bottom: 0.5rem;
-  color: #000000;
+  line-height: 1.6;
 }
-.section {
-  margin-bottom: 1.5rem;
+
+/* Role Alignment */
+.alignment-box {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-left: 5px solid #38bdf8;
+  border-radius: 12px;
+  font-size: 1.05rem;
 }
-.resume-card ul {
+
+/* Issues Section */
+.issues-section {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+.issues-section ul {
+  padding-left: 0;
+  list-style: none;
+}
+.issue {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  align-items: flex-start;
+}
+.issue svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.issue-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.issue-desc {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+.issue.critical svg {
+  color: #ef4444;
+}
+.issue.moderate svg {
+  color: #facc15;
+}
+.issue.ok svg {
+  color: #10b981;
+}
+.no-issues {
+  font-size: 1rem;
+  color: #10b981;
+}
+
+/* Feedback Section */
+.feedback-section {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+.feedback-section ul {
   list-style: none;
   padding-left: 0;
 }
-.resume-card li {
+.feedback-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+  color: #f3f4f6;
 }
-.resume-card li.ok svg {
-  color: #1ab65c;
+.feedback-item svg {
+  color: #34d399;
 }
-.resume-card li.warn svg {
-  color: #ff7f50;
+
+/* Responsive */
+@media (max-width: 768px) {
+  .score-circle {
+    width: 90px;
+    height: 90px;
+    font-size: 1.5rem;
+    border-width: 6px;
+  }
+  .analysis-container {
+    padding: 1.5rem;
+  }
+  .section-title {
+    font-size: 1.1rem;
+  }
 }
-.resume-card li span {
-  line-height: 1.4;
+
+/* Fade Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
