@@ -28,12 +28,15 @@ export default function ResumeAnalysisCard({
       {/* Resume Score */}
       <div className="score-box">
         <h2 className="score-title">Resume Score</h2>
-        <div
-          className="score-circle"
-          style={{ borderColor: getScoreColor(score) }}
-        >
-          {score}%
+        <div className="score-bar-container">
+          <div className="score-bar" style={{ width: `${score}%`, backgroundColor: getScoreColor(score) }}></div>
         </div>
+        <p className="score-percent">{score}%</p>
+        <p className="score-review">
+          {score >= 80 ? "Excellent resume! You're nearly job-ready." :
+           score >= 60 ? "Decent resume. Some polishing needed." :
+           "Resume needs significant improvements to stand out."}
+        </p>
       </div>
 
       {/* Extracted Info */}
@@ -59,7 +62,7 @@ export default function ResumeAnalysisCard({
         <h3 className="section-title">⚠️ Issues & Suggestions</h3>
         {issues.length > 0 ? (
           <ul>
-            {issues.map((issue, idx) => (
+            {issues.slice(0, 3).map((issue, idx) => (
               <li key={idx} className={`issue ${issue.type}`}>
                 {issue.type === 'critical' ? <CircleAlert size={18} /> :
                  issue.type === 'moderate' ? <AlertCircle size={18} /> :
@@ -74,6 +77,7 @@ export default function ResumeAnalysisCard({
         ) : (
           <p className="no-issues">✅ No major issues found.</p>
         )}
+        {issues.length > 3 && <button className="show-more">Show More</button>}
       </div>
 
       {/* Feedback Summary */}
@@ -85,6 +89,17 @@ export default function ResumeAnalysisCard({
               <BadgeCheck size={16} /> {point}
             </li>
           )) : <li>No feedback available.</li>}
+        </ul>
+      </div>
+
+      {/* Positives Section */}
+      <div className="positives-section">
+        <h3 className="section-title">✨ Strengths in Your Resume</h3>
+        <ul>
+          {skills.length >= 3 && <li><CheckCircle size={16} /> Good technical skill set listed.</li>}
+          {email.length > 0 && <li><CheckCircle size={16} /> Valid email address found.</li>}
+          {name !== 'Not Found' && <li><CheckCircle size={16} /> Name detected clearly.</li>}
+          {education !== 'Not Found' && <li><CheckCircle size={16} /> Education section present.</li>}
         </ul>
       </div>
     </div>

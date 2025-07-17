@@ -8,7 +8,7 @@ export default function ResumeUpload({ onFileUpload }) {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate(); // ✅
+  const navigate = useNavigate();
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -68,11 +68,17 @@ export default function ResumeUpload({ onFileUpload }) {
       .then((data) => {
         setLoading(false);
         if (data.text) {
-          // ✅ Redirect to new page and pass data
+          // ✅ Send all fields to analysis page
           navigate('/analysis', {
             state: {
-              info: data.info,
-              feedback: data.feedback,
+              info: data.info || {},
+              feedback: data.feedback || [],
+              score: data.score || 0,
+              alignment: data.alignment || '',
+              issues: data.issues || [],
+              strengths: data.strengths || [],
+              improvementTips: data.improvementTips || [],
+              scoreReview: data.scoreReview || '',
             },
           });
         } else {
