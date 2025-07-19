@@ -12,9 +12,9 @@ dist/
 dist-ssr/
 
 # Local env files
-.env
 .env.*
 !.env.example  # keep a sample env if needed
+backend/.env
 
 # Editor config
 .vscode/
