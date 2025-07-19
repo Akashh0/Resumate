@@ -31,16 +31,11 @@ export default function ResumeUpload({ onFileUpload }) {
 
   const validateFile = (file) => {
     if (!file) return;
-
-    const isValid =
-      file.type === 'application/pdf' ||
-      file.name.toLowerCase().endsWith('.docx');
-
+    const isValid = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.docx');
     if (!isValid) {
       alert('Please upload only PDF or DOCX files!');
       return;
     }
-
     setFile(file);
     uploadToBackend(file);
     if (onFileUpload) onFileUpload(file);
@@ -75,9 +70,24 @@ export default function ResumeUpload({ onFileUpload }) {
               score: data.score || 0,
               alignment: data.alignment || '',
               issues: data.issues || [],
-              suggestions: data.improvementTips || [],
-              positives: data.strengths || [],
-              scoreReview: data.scoreReview || '',
+              suggestions: data.suggestions || [],
+              positives: data.positives || [],
+              // Extra insights
+              wordCount: data.word_count || 0,
+              skillsCount: data.skills_count || 0,
+              hasGitHub: data.has_github_or_portfolio || false,
+              emailCount: data.email_count || 0,
+              phoneCount: data.phone_count || 0,
+              nameFound: data.name_found || false,
+              educationFound: data.education_found || false,
+              // Optional extracted fields from `info`
+              objective: data.info?.objective || 'Not Found',
+              experience: data.info?.experience || 'Not Found',
+              certifications: data.info?.certifications || [],
+              achievements: data.info?.achievements || [],
+              languages: data.info?.languages || [],
+              linkedinFound: data.info?.linkedin || false,
+              projectsMentioned: data.info?.has_projects || false
             },
           });
         } else {

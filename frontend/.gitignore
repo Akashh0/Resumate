@@ -3,22 +3,50 @@ logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Dependency directories
+node_modules/
+dist/
+dist-ssr/
 
-# Editor directories and files
-.vscode/*
+# Local env files
+.env
+.env.*
+!.env.example  # keep a sample env if needed
+
+# Editor config
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+.env  # (again to be sure)
+
+# React/Vite
+*.local
+*.env.local
+*.env.development
+*.env.production
+*.env.test
+
+# OS generated
+Thumbs.db
+ehthumbs.db

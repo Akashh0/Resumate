@@ -50,40 +50,46 @@ class UploadResumeView(APIView):
 
         temp_file_path = f'temp_{resume.name}'
         try:
-            # Save uploaded file temporarily
+            # Save the uploaded file
             with open(temp_file_path, 'wb+') as f:
                 for chunk in resume.chunks():
                     f.write(chunk)
 
-            # Extract text from resume
+            # Extract raw text
             text = extract_resume_text(temp_file_path)
-            if not text.strip():
-                raise ValueError("Could not extract text from the uploaded file.")
+            if not text or not text.strip():
+                raise ValueError("❌ Unable to extract text from the uploaded file.")
 
-            # Generate all feedback data
-            info = extract_info(text)
-            feedback_data = generate_feedback(text, info)
+            # Analyze resume
+            info = extract_info(text)  # Calls HuggingFace NER + regex/keyword rules
+            feedback = generate_feedback(text, info)
 
-            # Clean up temp file
+            # Clean up
             os.remove(temp_file_path)
 
-            # Return everything to frontend
             return Response({
-                "message": "Resume parsed and analyzed successfully",
+                "message": "✅ Resume parsed and analyzed successfully",
                 "text": text,
                 "info": info,
-                "score": feedback_data.get("score", 0),
-                "alignment": feedback_data.get("alignment", ""),
-                "feedback": feedback_data.get("feedback", []),
-                "issues": feedback_data.get("issues", []),
-                "positives": feedback_data.get("positives", []),
-                "suggestions": feedback_data.get("suggestions", [])
+                "score": feedback.get("score", 0),
+                "alignment": feedback.get("alignment", ""),
+                "feedback": feedback.get("feedback", []),
+                "issues": feedback.get("issues", []),
+                "positives": feedback.get("positives", []),
+                "suggestions": feedback.get("suggestions", []),
+                "word_count": info.get("word_count", 0),
+                "skills_count": len(info.get("skills", [])),
+                "has_github_or_portfolio": info.get("github", False),
+                "email_count": len(info.get("email", [])),
+                "phone_count": len(info.get("phone", [])),
+                "name_found": info.get("name") != "Not Found",
+                "education_found": info.get("education") == "Yes"
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"❌ Resume analysis failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
