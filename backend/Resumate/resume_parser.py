@@ -1,11 +1,21 @@
+import os
 import re
-from transformers import pipeline
+import requests
+from dotenv import load_dotenv
 
-# ✅ HuggingFace Pipelines (faster model)
-ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", grouped_entities=True)
-bert_classifier = pipeline("zero-shot-classification", model="joeddav/xlm-roberta-large-xnli")
+# ✅ Load environment variables
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
 
-# ✅ Extract text from resume
+HUGGINGFACE_API_KEY = os.getenv("HF_API_TOKEN")
+
+
+if not HUGGINGFACE_API_KEY:
+    raise ValueError("❌ Hugging Face API key not found in .env file")
+
+headers = {
+    "Authorization": f"Bearer {HUGGINGFACE_API_KEY}"
+}
+
 def extract_resume_text(path):
     import pdfplumber
     import docx2txt
@@ -17,119 +27,108 @@ def extract_resume_text(path):
         return docx2txt.process(path)
     return ""
 
-# ✅ Extract key info
+def call_huggingface_model(model, inputs, parameters=None):
+    url = f"https://api-inference.huggingface.co/models/{model}"
+    payload = {"inputs": inputs}
+    if parameters:
+        payload["parameters"] = parameters
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    return response.json()
+
 def extract_info(text):
     info = {}
     info["email"] = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.\w+", text)
     info["phone"] = re.findall(r"\+?\d[\d\s\-()]{8,15}", text)
+    info["word_count"] = len(text.split())
 
-    # Extract name using NER
+    # Name via NER
+    ner_results = call_huggingface_model("dslim/bert-base-NER", text[:512])
     name = "Not Found"
-    entities = ner_pipeline(text[:1000])  # Limit to beginning for performance
-    for ent in entities:
+    for ent in ner_results:
         if ent["entity_group"] == "PER":
             name = ent["word"].replace("##", "")
             break
     info["name"] = name
 
-    # Skills (Basic keyword match)
-    skill_set = [
-        "python", "java", "c++", "html", "css", "javascript", "react",
-        "node", "django", "flask", "sql", "mongodb", "nlp", "machine learning"
-    ]
+    # Skills
+    skill_set = ["python", "java", "c++", "html", "css", "javascript", "react", "node", "django", "flask", "sql", "mongodb", "nlp", "machine learning"]
     info["skills"] = [skill for skill in skill_set if skill in text.lower()]
 
-    # Education detection
+    # Education
     edu_keywords = ["b.tech", "m.tech", "bachelor", "master", "degree", "graduation", "university", "college"]
     info["education"] = "Yes" if any(k in text.lower() for k in edu_keywords) else "Not Found"
 
+    # Other info
+    info["github"] = any(k in text.lower() for k in ["github.com", "portfolio"])
+    info["has_projects"] = any(k in text.lower() for k in ["project", "built", "developed"])
+    info["languages"] = re.findall(r"\b(?:english|hindi|french|german|spanish)\b", text.lower())
+    info["certifications"] = [line for line in text.split("\n") if "certificate" in line.lower() or "certified" in line.lower()]
+    info["achievements"] = [line for line in text.split("\n") if "award" in line.lower() or "achievement" in line.lower()]
+    info["objective"] = next((line for line in text.lower().split("\n") if "objective" in line or "summary" in line), "Not Found")
+    info["experience"] = next((line for line in text.lower().split("\n") if "experience" in line), "Not Found")
+    info["linkedin"] = any("linkedin.com" in line.lower() for line in text.split("\n"))
+
     return info
 
-# ✅ Feedback Generator
 def generate_feedback(text, info):
     score = 100
-    issues = []
-    positives = []
-    suggestions = []
+    issues, positives, suggestions = [], [], []
     feedback = []
     alignment = "Alignment not available."
 
-    # --- GitHub/Portfolio Link ---
-    if "github" not in text.lower() and "portfolio" not in text.lower():
-        score -= 15
-        issues.append({
-            "type": "critical",
-            "title": "Missing GitHub/Portfolio",
-            "description": "Include links to your GitHub or personal portfolio."
+    # Career Alignment using BART NLI
+    try:
+        result = call_huggingface_model("facebook/bart-large-mnli", text[:512], parameters={
+            "candidate_labels": ["Software Engineer", "Data Scientist", "Web Developer", "AI Engineer"]
         })
-        suggestions.append("Add GitHub or portfolio link to showcase your work.")
+        best_fit = result["labels"][0]
+        confidence = round(result["scores"][0] * 100, 1)
+        alignment = f"{best_fit} ({confidence}% match)"
+    except Exception as e:
+        alignment = "Alignment check failed."
+
+    # GitHub/Portfolio check
+    if not info.get("github"):
+        score -= 15
+        issues.append({"type": "critical", "title": "Missing GitHub/Portfolio", "description": "Include links to your GitHub or personal portfolio."})
+        suggestions.append("Add GitHub or portfolio link.")
     else:
         positives.append("GitHub/Portfolio link included")
 
-    # --- Word Count ---
-    word_count = len(text.split())
-    if word_count < 150:
+    # Word count check
+    if info["word_count"] < 150:
         score -= 10
-        issues.append({
-            "type": "moderate",
-            "title": "Resume too short",
-            "description": f"Your resume has {word_count} words. Consider elaborating your experience."
-        })
-        suggestions.append("Expand your resume to at least 250–400 words for depth.")
+        issues.append({"type": "moderate", "title": "Resume too short", "description": f"Only {info['word_count']} words."})
+        suggestions.append("Expand to 250–400 words.")
     else:
         positives.append("Sufficient word count")
 
-    # --- Education ---
-    if info.get("education") == "Not Found":
+    # Education check
+    if info["education"] == "Not Found":
         score -= 15
-        issues.append({
-            "type": "critical",
-            "title": "Education section missing",
-            "description": "Mention your degree, university, and graduation year."
-        })
-        suggestions.append("Add your education details to reflect qualifications.")
+        issues.append({"type": "critical", "title": "Education section missing", "description": "Mention your degree and university."})
+        suggestions.append("Add education section.")
     else:
         positives.append("Education section present")
 
-    # --- Skills ---
+    # Skills check
     if len(info.get("skills", [])) < 3:
         score -= 10
-        issues.append({
-            "type": "moderate",
-            "title": "Too few skills",
-            "description": "List relevant skills, tools, or frameworks."
-        })
-        suggestions.append("Add more relevant skills (languages, frameworks, tools).")
+        issues.append({"type": "moderate", "title": "Too few skills", "description": "Add more technical skills."})
+        suggestions.append("List at least 5–10 skills.")
     else:
         positives.append("Skills listed adequately")
 
-    # --- Name ---
-    if info.get("name") == "Not Found":
+    # Name check
+    if info["name"] == "Not Found":
         score -= 10
-        issues.append({
-            "type": "moderate",
-            "title": "Name not detected",
-            "description": "Ensure your name is clearly written at the top."
-        })
-        suggestions.append("Write your full name prominently at the top.")
+        issues.append({"type": "moderate", "title": "Name not detected", "description": "Ensure your name is visible at the top."})
+        suggestions.append("Put your full name prominently.")
     else:
         positives.append("Name clearly found")
 
-    # --- Role Alignment (Optimized) ---
-    try:
-        labels = ["Software Engineer", "Data Scientist", "Web Developer", "AI Engineer"]
-        short_text = ' '.join(text.split()[:500])  # Truncate for faster response
-        result = bert_classifier(short_text, labels)
-
-        if result and result.get("labels"):
-            best_fit = result["labels"][0]
-            confidence = round(result["scores"][0] * 100, 1)
-            alignment = f"{best_fit} ({confidence}% match)"
-    except Exception as e:
-        print("Alignment check failed:", e)
-        alignment = "Alignment check failed."
-
-    # --- Final Review ---
+    # Final Review
     if score >= 85:
         feedback.append("🌟 Excellent resume! You're doing great. Just minor polish needed.")
     elif score >= 65:
