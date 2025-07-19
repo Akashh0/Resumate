@@ -83,12 +83,22 @@ export default function ResumeAnalysisCard() {
           <li><strong>Word Count:</strong> {wordCount}</li>
           <li><strong>Education:</strong> {educationFound ? "✅ Yes" : "❌ No"}</li>
           <li><strong>Skills:</strong> {Array.isArray(skills) ? skills.join(', ') : 'None'}</li>
-          <li><strong>Soft Skills:</strong> {Array.isArray(softSkills) ? softSkills.join(', ') : 'None'}</li>
-          <li><strong>Certifications:</strong> {Array.isArray(certifications) ? certifications.join(', ') : 'None'}</li>
-          <li><strong>Experience:</strong> {experience || 'Not Found'}</li>
+          <li><strong>Certifications:</strong> {
+          Array.isArray(certifications)
+          ? (certifications.length > 0 ? '✅ Yes' : '❌ No')
+          : '❌ No'
+          }</li>
+          <li><strong>Experience:</strong> {
+          Array.isArray(experience)
+          ? (experience.length > 0 ? experience.join(', ') : 'None')
+          : (experience || 'None')
+          }</li>
           <li><strong>Projects Mentioned:</strong> {projectsMentioned ? "✅ Yes" : "❌ No"}</li>
-          <li><strong>Achievements:</strong> {Array.isArray(achievements) ? achievements.join(', ') : 'None'}</li>
-          <li><strong>Objective:</strong> {objective || 'Not Found'}</li>
+          <li><strong>Achievements:</strong> {
+          Array.isArray(achievements)
+          ? (achievements.length > 0 ? '✅ Yes' : '❌ No')
+          : (achievements && achievements !== 'Not Found' ? '✅ Yes' : '❌ No')
+          }</li>
           <li><strong>GitHub:</strong> {hasGitHub ? "✅ Yes" : "❌ No"}</li>
           <li><strong>LinkedIn:</strong> {linkedinFound ? "✅ Yes" : "❌ No"}</li>
           <li><strong>Languages:</strong> {languages.join(', ') || 'Not Mentioned'}</li>
