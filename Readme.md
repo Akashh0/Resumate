@@ -2,7 +2,7 @@
 
 ResuMate is your personal AI assistant that reviews resumes like a seasoned recruiter. Powered by advanced NLP models and machine learning, it evaluates resume structure, clarity, and alignment to job roles — giving instant feedback, improvement suggestions, and scoring to boost your interview chances!
 
-![Banner](https://user-images.githubusercontent.com/your-banner-placeholder.png)
+![Banner](CoverPic.jpg)
 
 ---
 

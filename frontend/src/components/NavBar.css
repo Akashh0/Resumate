@@ -39,13 +39,14 @@
 }
 
 
-
 .navbar__toggle {
   display: none;
   flex-direction: column;
   gap: 4px;
   cursor: pointer;
+  margin-left: 10px;
 }
+
 
 .bar {
   width: 25px;
@@ -148,6 +149,7 @@
 @media (max-width: 768px) {
   .navbar__links {
     position: absolute;
+    justify-content: flex-start;
     top: 60px;
     right: 0;
     background-color: #1e1e2f;
@@ -172,5 +174,9 @@
 
   .navbar__toggle {
     display: flex;
+  }
+  
+  .navbar__logo {
+    margin-left: auto; /* push logo slightly right to balance */
   }
 }
