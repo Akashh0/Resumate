@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=58", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resumate"
+version = "0.1.0"
+description = "AI-Powered Resume Analyzer with Feedback and Job Alignment"
+authors = [
+    { name="Akash", email="akash@example.com" }
+]
+dependencies = [
+    "Django==5.1.2",
+    "djangorestframework==3.16.0",
+    "djangorestframework-simplejwt==5.5.0",
+    "gunicorn",
+    "python-dotenv",
+    "django-cors-headers==4.7.0",
+    "docx2txt",
+    "pdfplumber",
+    "huggingface-hub",
+    "transformers",
+    "sentencepiece",
+    # Add any other packages you need (see below)
+]
+
+[tool.setuptools]
+packages = ["backend"]
+include-package-data = true
