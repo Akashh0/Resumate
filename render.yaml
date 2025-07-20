@@ -1,9 +1,8 @@
-# render.yaml
 services:
   - type: web
     name: resumate-backend
     env: python
-    buildCommand: pip install -r backend/requirements.txt
+    buildCommand: ""
     startCommand: gunicorn backend.wsgi:application
     envVars:
       - key: DJANGO_SETTINGS_MODULE
