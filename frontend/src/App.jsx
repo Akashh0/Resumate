@@ -5,6 +5,7 @@ import AuthProvider from './components/context/AuthContext';
 import ResumeUpload from './components/ResumeUpload';
 import ResumeHero from './components/ResumeHero';
 import ResumeAnalysisPage from './components/ResumeAnalysisPage'; // ✅ Use this as a page
+import Footer from '../Footer';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/upload" element={<ResumeUpload />} />
           <Route path="/analysis" element={<ResumeAnalysisPage />} /> 
         </Routes>
+        <Footer />
       </Router>
     </AuthProvider>
   );
