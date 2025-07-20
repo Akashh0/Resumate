@@ -99,9 +99,19 @@ export default function ResumeAnalysisCard() {
           ? (achievements.length > 0 ? '✅ Yes' : '❌ No')
           : (achievements && achievements !== 'Not Found' ? '✅ Yes' : '❌ No')
           }</li>
-          <li><strong>GitHub:</strong> {hasGitHub ? "✅ Yes" : "❌ No"}</li>
+          <li><strong>GitHub:</strong> 
+          {info.github && info.github !== "Not Found" ? (
+          <a href={info.github} target="_blank" rel="noreferrer">{info.github}</a>
+          ) : "❌ No"}
+          </li>
+
           <li><strong>LinkedIn:</strong> {linkedinFound ? "✅ Yes" : "❌ No"}</li>
-          <li><strong>Languages:</strong> {languages.join(', ') || 'Not Mentioned'}</li>
+          <li>
+          <strong>Languages:</strong>{" "}
+          {Array.isArray(languages)
+          ? (languages.length > 0 ? languages.join(', ') : 'Not Mentioned')
+          : (languages || 'Not Mentioned')}
+          </li>
         </ul>
       </div>
 

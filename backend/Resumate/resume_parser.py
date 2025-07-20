@@ -1,32 +1,38 @@
 import os
 import re
 import requests
+import pdfplumber
+import docx2txt
 from dotenv import load_dotenv
 
-# ✅ Load environment variables
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
+# Load environment variables from the .env file
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(dotenv_path=dotenv_path)
+
 HUGGINGFACE_API_KEY = os.getenv("HF_API_TOKEN")
-
 if not HUGGINGFACE_API_KEY:
-    raise ValueError("❌ Hugging Face API key not found in .env file")
+    raise ValueError("❌ Hugging Face API key (HF_API_TOKEN) not found in .env file")
 
-headers = {
-    "Authorization": f"Bearer {HUGGINGFACE_API_KEY}"
-}
+headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
 
-def extract_resume_text(path):
-    import pdfplumber
-    import docx2txt
 
-    if path.endswith(".pdf"):
-        with pdfplumber.open(path) as pdf:
-            return "\n".join(page.extract_text() or "" for page in pdf.pages)
-    elif path.endswith(".docx"):
-        return docx2txt.process(path)
+def extract_resume_text(file_path):
+    if file_path.lower().endswith(".pdf"):
+        try:
+            with pdfplumber.open(file_path) as pdf:
+                return "\n".join(page.extract_text() or "" for page in pdf.pages)
+        except Exception as e:
+            print(f"Error reading PDF: {e}")
+    elif file_path.lower().endswith(".docx"):
+        try:
+            return docx2txt.process(file_path)
+        except Exception as e:
+            print(f"Error reading DOCX: {e}")
     return ""
 
-def call_huggingface_model(model, inputs, parameters=None):
-    url = f"https://api-inference.huggingface.co/models/{model}"
+
+def call_huggingface_model(model_id, inputs, parameters=None):
+    url = f"https://api-inference.huggingface.co/models/{model_id}"
     payload = {"inputs": inputs}
     if parameters:
         payload["parameters"] = parameters
@@ -34,125 +40,213 @@ def call_huggingface_model(model, inputs, parameters=None):
     response.raise_for_status()
     return response.json()
 
-def extract_info(text):
-    info = {}
 
-    # Contact info
-    info["email"] = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.\w+", text)
-    info["phone"] = re.findall(r"\+?\d[\d\s\-()]{8,15}", text)
+def extract_section(text, section_keywords):
+    all_sections = [
+        "education", "experience", "skills", "projects", "achievements", "awards",
+        "certifications", "publications", "summary", "objective", "contact",
+        "honors", "professional experience", "work experience"
+    ]
+    pattern_start = r"(?i)^\s*(?:[-*•]?\s*)?(" + "|".join(section_keywords) + r")\b"
+    match = re.search(pattern_start, text, re.MULTILINE)
+    if not match:
+        return "Not Found"
+    start_index = match.end()
+    end_index = len(text)
+    pattern_end = r"(?i)^\s*(?:[-*•]?\s*)?(" + "|".join(s for s in all_sections if s not in section_keywords) + r")\b"
+    next_match = re.search(pattern_end, text[start_index:], re.MULTILINE)
+    if next_match:
+        end_index = start_index + next_match.start()
+    section_text = text[start_index:end_index].strip()
+    return "Yes" if section_text else "Not Found"
+
+
+def extract_info(text):
+    if not text:
+        return {}
+
+    info = {}
+    text_lower = text.lower()
+
+    # Contact Info
+    info["email"] = list(set(re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)))
+    info["phone"] = list(set(re.findall(r"(\+?\d[\d\s\-()]{8,15}\d)", text)))
     info["word_count"] = len(text.split())
 
-    # ---------------------- NAME EXTRACTION ----------------------
+    # Name Extraction
     name = "Not Found"
     try:
-        ner_results = call_huggingface_model("dslim/bert-base-NER", text[:512])
-        name_tokens = []
+        ner_results = call_huggingface_model(
+            "Jean-Baptiste/roberta-large-ner-english",
+            text[:512],
+            parameters={"aggregation_strategy": "simple"}
+        )
         for ent in ner_results:
             if ent["entity_group"] == "PER":
-                word = ent["word"]
-                if word.startswith("##") and name_tokens:
-                    name_tokens[-1] += word[2:]
-                else:
-                    name_tokens.append(word)
-        if name_tokens:
-            name = " ".join(name_tokens).strip()
-        else:
-            # Fallback: Look at first 5 lines for ALL-CAPS name
+                name = ent["word"].strip().title()
+                break
+        if name == "Not Found":
             for line in text.split("\n")[:5]:
                 if line.strip().isupper() and 2 <= len(line.split()) <= 5:
                     name = line.strip().title()
                     break
-    except Exception:
-        name = "Not Found"
+    except Exception as e:
+        print(f"⚠️ Name extraction failed: {e}")
     info["name"] = name
-    
 
-    # ---------------------- SKILLS EXTRACTION ----------------------
-    skill_set = ["python", "java", "c++", "html", "css", "javascript", "react", "node", "django", "flask", "sql", "mongodb", "nlp", "machine learning"]
-    text_lower = text.lower()
-    info["skills"] = [skill for skill in skill_set if skill in text_lower]
+    # GitHub / LinkedIn
+    github_match = re.search(r"github\.com/([\w\-]+)", text_lower)
+    info["github"] = f"https://github.com/{github_match.group(1)}" if github_match else "Not Found"
 
-    # ---------------------- OTHER SECTIONS ----------------------
-    edu_keywords = ["b.tech", "m.tech", "bachelor", "master", "degree", "graduation", "university", "college"]
-    info["education"] = "Yes" if any(k in text_lower for k in edu_keywords) else "Not Found"
+    linkedin_match = re.search(r"linkedin\.com/in/([\w\-]+)", text_lower)
+    info["linkedin"] = f"https://linkedin.com/in/{linkedin_match.group(1)}" if linkedin_match else "Not Found"
 
-    info["github"] = any(k in text_lower for k in ["github.com", "portfolio"])
-    info["has_projects"] = any(k in text_lower for k in ["project", "built", "developed"])
+    # Languages (always list)
+    langs = re.findall(r"\b(english|hindi|french|german|tamil|telugu|spanish|marathi)\b", text_lower)
+    info["languages"] = list(set(langs)) if langs else []
 
-    info["languages"] = re.findall(r"\b(?:english|hindi|french|german|spanish)\b", text_lower)
-    info["certifications"] = "Yes" if any("certificat" in line.lower() for line in text.split("\n")) else "No"
-    info["achievements"] = "Yes" if any("award" in line.lower() or "achievement" in line.lower() for line in text.split("\n")) else "No"
-    info["experience"] = next((line for line in text_lower.split("\n") if "experience" in line), "Not Found")
-    info["linkedin"] = any("linkedin.com" in line.lower() for line in text.split("\n"))
+    # Skills
+    skill_set = [
+        "python", "java", "c++", "c#", "html", "css", "javascript", "typescript", "react", "angular",
+        "vue", "node.js", "django", "flask", "fastapi", "sql", "mysql", "postgresql", "mongodb", "nlp",
+        "machine learning", "deep learning", "tensorflow", "pytorch", "scikit-learn", "pandas", "numpy",
+        "docker", "kubernetes", "aws", "azure", "gcp", "git"
+    ]
+    info["skills"] = list(set(skill for skill in skill_set if skill in text_lower))
+
+    # Section Flags
+    info["education"] = "Yes" if extract_section(text, ["education", "academic background", "qualifications"]) != "Not Found" else "No"
+    info["achievements"] = "Yes" if extract_section(text, ["achievements", "awards", "honors"]) != "Not Found" else "No"
+    info["certifications"] = "Yes" if extract_section(text, ["certifications", "licenses & certifications"]) != "Not Found" else "No"
+    info["projects"] = "Yes" if extract_section(text, ["projects", "personal projects"]) != "Not Found" else "No"
 
     return info
 
+
+
 def generate_feedback(text, info):
     score = 100
-    issues, positives, suggestions = [], [], []
-    feedback = []
-    alignment = "Alignment not available."
+    issues = []
+    positives = []
+    alignment = "Alignment check unavailable."
 
-    # Role Alignment using NLI
+    # Role alignment
     try:
-        result = call_huggingface_model("facebook/bart-large-mnli", text[:512], parameters={
-            "candidate_labels": ["Software Engineer", "Data Scientist", "Web Developer", "AI Engineer"]
+        result = call_huggingface_model(
+            "facebook/bart-large-mnli",
+            text[:1024],
+            parameters={"candidate_labels": ["Software Engineer", "Data Scientist", "Web Developer", "AI Engineer"]}
+        )
+        if isinstance(result, dict) and "labels" in result and "scores" in result:
+            best_fit = result["labels"][0]
+            confidence = round(result["scores"][0] * 100, 1)
+            alignment = f"{best_fit} ({confidence}% match)"
+            positives.append("Resume shows a clear role alignment.")
+        else:
+            print(f"⚠️ Unexpected alignment model output: {result}")
+    except Exception as e:
+        print(f"⚠️ Alignment failed: {e}")
+
+    # Name
+    name_found = info.get("name", "Not Found") != "Not Found"
+    if not name_found:
+        score -= 10
+        issues.append({
+            "type": "critical",
+            "title": "Name Not Detected",
+            "description": "Make sure your full name is prominently visible at the top."
         })
-        best_fit = result["labels"][0]
-        confidence = round(result["scores"][0] * 100, 1)
-        alignment = f"{best_fit} ({confidence}% match)"
-    except Exception:
-        alignment = "Alignment check failed."
+    else:
+        positives.append("Candidate name is clearly identified.")
 
-    # Checks
-    if not info.get("github"):
+    # GitHub
+    github_url = info.get("github", "Not Found")
+    has_github = "github.com" in github_url
+    if not has_github:
         score -= 15
-        issues.append({"type": "critical", "title": "Missing GitHub/Portfolio", "description": "Include links to your GitHub or personal portfolio."})
-        suggestions.append("Add GitHub or portfolio link.")
+        issues.append({
+            "type": "critical",
+            "title": "Missing GitHub/Portfolio",
+            "description": "Add a GitHub or portfolio link to showcase your work."
+        })
     else:
-        positives.append("GitHub/Portfolio link included")
+        positives.append("Includes GitHub or portfolio link.")
 
-    if info["word_count"] < 150:
+    # LinkedIn
+    linkedin_url = info.get("linkedin", "Not Found")
+    has_linkedin = "linkedin.com/in/" in linkedin_url
+
+    # Word count
+    wc = info.get("word_count", 0)
+    if wc < 250:
         score -= 10
-        issues.append({"type": "moderate", "title": "Resume too short", "description": f"Only {info['word_count']} words."})
-        suggestions.append("Expand to 250–400 words.")
+        issues.append({
+            "type": "moderate",
+            "title": "Resume Too Short",
+            "description": f"{wc} words detected. Ideal range is 300–500 words."
+        })
+    elif wc > 700:
+        score -= 10
+        issues.append({
+            "type": "moderate",
+            "title": "Resume Too Long",
+            "description": f"{wc} words detected. Try keeping it under one page."
+        })
     else:
-        positives.append("Sufficient word count")
+        positives.append("Resume length is optimal.")
 
-    if info["education"] == "Not Found":
+    # Education
+    education_found = info.get("education", "No") == "Yes"
+    if not education_found:
         score -= 15
-        issues.append({"type": "critical", "title": "Education section missing", "description": "Mention your degree and university."})
-        suggestions.append("Add education section.")
+        issues.append({
+            "type": "critical",
+            "title": "Missing Education Section",
+            "description": "Include academic background, degree, or university."
+        })
     else:
-        positives.append("Education section present")
+        positives.append("Education section is present.")
 
-    if len(info.get("skills", [])) < 3:
+    # Skills
+    skills = info.get("skills", [])
+    if len(skills) < 5:
         score -= 10
-        issues.append({"type": "moderate", "title": "Too few skills", "description": "Add more technical skills."})
-        suggestions.append("List at least 5–10 skills.")
+        issues.append({
+            "type": "moderate",
+            "title": "Few Skills Listed",
+            "description": "List at least 5–10 relevant technical skills."
+        })
     else:
-        positives.append("Skills listed adequately")
+        positives.append("Skills section is well-filled.")
 
-    if info["name"] == "Not Found":
+    # Projects
+    projects_mentioned = info.get("projects", "No") == "Yes"
+    if not projects_mentioned:
         score -= 10
-        issues.append({"type": "moderate", "title": "Name not detected", "description": "Ensure your name is visible at the top."})
-        suggestions.append("Put your full name prominently.")
+        issues.append({
+            "type": "moderate",
+            "title": "Projects Not Mentioned",
+            "description": "Include a 'Projects' section to demonstrate experience."
+        })
     else:
-        positives.append("Name clearly found")
-
-    # Final feedback
-    if score >= 85:
-        feedback.append("🌟 Excellent resume! You're doing great. Just minor polish needed.")
-    elif score >= 65:
-        feedback.append("👍 Good effort! Address the listed issues to make it even better.")
-    else:
-        feedback.append("⚠️ Needs improvement. Consider reworking the sections mentioned.")
+        positives.append("Projects section is included.")
 
     return {
         "score": max(score, 0),
         "alignment": alignment,
-        "feedback": feedback,
         "issues": issues,
         "positives": positives,
-        "suggestions": suggestions
+        "feedback": positives,
+        "name_found": name_found,
+        "education_found": education_found,
+        "has_github": has_github,
+        "linkedin_found": has_linkedin,
+        "projects_mentioned": projects_mentioned,
+        "email_count": len(info.get("email", [])),
+        "phone_count": len(info.get("phone", [])),
+        "word_count": wc,
+        "skills_count": len(skills),
+        "certifications": info.get("certifications", "No"),
+        "achievements": info.get("achievements", "No"),
+        "languages": info.get("languages", []),
     }
