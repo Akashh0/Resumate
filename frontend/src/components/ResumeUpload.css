@@ -10,7 +10,7 @@ body {
 .upload-container {
   border: 2px dashed #8b5cf6;
   border-radius: 20px;
-  padding: 60px 40px;
+  padding: 60px 0px;
   background-color: rgba(255, 255, 255, 0.05);
   color: #fff;
   text-align: center;

@@ -4,6 +4,9 @@ import './ResumeHero.css';
 import ResumeUpload from './ResumeUpload';
 import img01 from '../assets/01.jpg'
 import img02 from '../assets/02.jpg'
+import img03 from '../assets/03.jpg'
+import img04 from '../assets/04.jpg'
+import img05 from '../assets/05.jpg'
 
 export default function ResumeHero() {
   return (
@@ -61,6 +64,44 @@ export default function ResumeHero() {
             <img src={img02} alt="AI Resume Checker" />
           </div>
         </div>
+        <div className="feature-box">
+  <div className="feature-text">
+    <h2>Get instant, actionable resume scores</h2>
+    <p>
+      Our resume checker gives you a score across multiple metrics that hiring managers actually use — clarity, formatting, keywords, and more.
+      It's like having a recruiter review your resume in real time.
+    </p>
+  </div>
+  <div className="feature-image">
+    <img src={img03} alt="Instant Scoring" />
+  </div>
+</div>
+
+<div className="feature-box reverse">
+  <div className="feature-text">
+    <h2>Optimize your resume for specific roles</h2>
+    <p>
+      Tailor your resume for jobs like Software Engineer, Data Scientist, or Product Manager. 
+      Our AI tells you what to highlight, what to improve, and what to remove.
+    </p>
+  </div>
+  <div className="feature-image">
+    <img src={img04} alt="Role Based Optimization" />
+  </div>
+</div>
+
+<div className="feature-box">
+  <div className="feature-text">
+    <h2>Designed with recruiters in mind</h2>
+    <p>
+      Our resume analysis is backed by experts from companies like Google, Amazon, and McKinsey — ensuring your resume meets top industry standards.
+    </p>
+  </div>
+  <div className="feature-image">
+    <img src={img05} alt="Recruiter Standard Resume" />
+  </div>
+</div>
+
       </div>
     </div>
   );

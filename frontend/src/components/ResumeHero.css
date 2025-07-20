@@ -7,7 +7,8 @@
   justify-content: space-between;
   align-items: center;
   background: linear-gradient(to right, #300060, #090979, #00d4ff);
-  padding: 5rem 8%;
+  padding: 1rem 8%;
+  padding-bottom: none;
   min-height: 100vh;
   color: white;
   overflow: hidden;
@@ -74,9 +75,9 @@
 .feature-section {
   display: flex;
   flex-direction: column;
-  gap: 80px;
-  padding: 5rem 8%;
-  background-color: #071e3d;
+  gap: 30px;
+  padding: 1rem 8%;
+  background: linear-gradient(to right, #300060, #090979, #00d4ff);
   color: white;
 }
 
@@ -94,6 +95,11 @@
 
 .feature-text {
   flex: 1;
+  border: 2px solid rgba(0, 0, 0, 0.267);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 .feature-text h2 {
@@ -115,9 +121,8 @@
 
 .feature-image img {
   width: 100%;
-  max-width: 450px;
+  max-width: 500px;
   border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 /* ================= RESPONSIVE ================= */
