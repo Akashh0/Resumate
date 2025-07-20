@@ -83,17 +83,11 @@ export default function ResumeAnalysisCard() {
           <li><strong>Word Count:</strong> {wordCount}</li>
           <li><strong>Education:</strong> {educationFound ? "✅ Yes" : "❌ No"}</li>
           <li><strong>Skills:</strong> {Array.isArray(skills) ? skills.join(', ') : 'None'}</li>
-          <li><strong>Certifications:</strong> {
-          Array.isArray(certifications)
-          ? (certifications.length > 0 ? '✅ Yes' : '❌ No')
-          : '❌ No'
-          }</li>
           <li><strong>Experience:</strong> {
           Array.isArray(experience)
           ? (experience.length > 0 ? experience.join(', ') : 'None')
           : (experience || 'None')
           }</li>
-          <li><strong>Projects Mentioned:</strong> {projectsMentioned ? "✅ Yes" : "❌ No"}</li>
           <li><strong>Achievements:</strong> {
           Array.isArray(achievements)
           ? (achievements.length > 0 ? '✅ Yes' : '❌ No')

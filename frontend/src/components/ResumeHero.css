@@ -1,5 +1,6 @@
 /* ResumeHero.css */
 
+/* ================= HERO SECTION ================= */
 .hero-wrapper {
   position: relative;
   display: flex;
@@ -51,17 +52,15 @@
   z-index: 3;
 }
 
-/* Fix image so it NEVER moves */
 .hero-right {
-  position: absolute; /* ✨ fixed inside hero-wrapper */
+  position: absolute;
   top: 50%;
   right: -100px;
   transform: translateY(-45%);
   z-index: 1;
   pointer-events: none;
-  height: 100%; /* lock vertical space */
+  height: 100%;
 }
-
 
 .floating-image {
   height: 700px;
@@ -71,7 +70,57 @@
   opacity: 0.95;
 }
 
-/* Responsive Design */
+/* ================= FEATURE SECTION ================= */
+.feature-section {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  padding: 5rem 8%;
+  background-color: #071e3d;
+  color: white;
+}
+
+.feature-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 60px;
+  justify-content: space-between;
+}
+
+.feature-box.reverse {
+  flex-direction: row-reverse;
+}
+
+.feature-text {
+  flex: 1;
+}
+
+.feature-text h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.feature-text p {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.feature-image {
+  flex: 1;
+  text-align: center;
+}
+
+.feature-image img {
+  width: 100%;
+  max-width: 450px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* ================= RESPONSIVE ================= */
 @media (max-width: 1080px) {
   .hero-wrapper {
     flex-direction: column;
@@ -93,5 +142,23 @@
 
   .hero-right {
     display: none;
+  }
+
+  .feature-box,
+  .feature-box.reverse {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .feature-text h2 {
+    font-size: 1.6rem;
+  }
+
+  .feature-text p {
+    font-size: 1rem;
+  }
+
+  .feature-image img {
+    max-width: 100%;
   }
 }

@@ -42,23 +42,45 @@ def call_huggingface_model(model_id, inputs, parameters=None):
 
 
 def extract_section(text, section_keywords):
-    all_sections = [
+    """
+    Extracts a section's content using a robust regex-based approach.
+    Returns the content if found, otherwise returns None.
+    """
+    all_section_starters = [
         "education", "experience", "skills", "projects", "achievements", "awards",
         "certifications", "publications", "summary", "objective", "contact",
-        "honors", "professional experience", "work experience"
+        "honors", "professional experience", "work experience", "technical events"
     ]
-    pattern_start = r"(?i)^\s*(?:[-*•]?\s*)?(" + "|".join(section_keywords) + r")\b"
-    match = re.search(pattern_start, text, re.MULTILINE)
+
+    # Pattern to find the start of the target section (case-insensitive, whole word)
+    start_pattern = r"(?i)\b(" + "|".join(section_keywords) + r")\b"
+    match = re.search(start_pattern, text)
+    
     if not match:
-        return "Not Found"
+        return None
+
+    # Find where the actual content starts (after the heading)
     start_index = match.end()
+    
+    # Find the start of the next possible section to set the boundary
     end_index = len(text)
-    pattern_end = r"(?i)^\s*(?:[-*•]?\s*)?(" + "|".join(s for s in all_sections if s not in section_keywords) + r")\b"
-    next_match = re.search(pattern_end, text[start_index:], re.MULTILINE)
+    
+    # Create a pattern for all other section headings
+    next_section_keywords = [s for s in all_section_starters if s not in section_keywords]
+    next_section_pattern = r"(?i)\b(" + "|".join(next_section_keywords) + r")\b"
+    
+    # Search for the next heading only in the text *after* our current section's heading
+    next_match = re.search(next_section_pattern, text[start_index:])
     if next_match:
         end_index = start_index + next_match.start()
+
+    # Extract and clean the content
     section_text = text[start_index:end_index].strip()
-    return "Yes" if section_text else "Not Found"
+    
+    # Remove any leading colons or newlines for cleaner text
+    cleaned_text = re.sub(r"^\s*[:\-\s]*\n", "", section_text).strip()
+    
+    return cleaned_text if cleaned_text else None
 
 
 def extract_info(text):
@@ -115,13 +137,12 @@ def extract_info(text):
     info["skills"] = list(set(skill for skill in skill_set if skill in text_lower))
 
     # Section Flags
-    info["education"] = "Yes" if extract_section(text, ["education", "academic background", "qualifications"]) != "Not Found" else "No"
-    info["achievements"] = "Yes" if extract_section(text, ["achievements", "awards", "honors"]) != "Not Found" else "No"
-    info["certifications"] = "Yes" if extract_section(text, ["certifications", "licenses & certifications"]) != "Not Found" else "No"
-    info["projects"] = "Yes" if extract_section(text, ["projects", "personal projects"]) != "Not Found" else "No"
+    info["education"] = "Yes" if extract_section(text, ["education", "academic background", "qualifications"]) is not None else "No"
+    info["achievements"] = "Yes" if extract_section(text, ["achievements", "awards", "honors"]) is not None else "No"
+    info["certifications"] = "Yes" if extract_section(text, ["certifications", "licenses", "certification"]) is not None else "No"
+    info["projects"] = "Yes" if extract_section(text, ["projects", "personal projects", "project"]) is not None else "No"
 
     return info
-
 
 
 def generate_feedback(text, info):
@@ -241,12 +262,10 @@ def generate_feedback(text, info):
         "education_found": education_found,
         "has_github": has_github,
         "linkedin_found": has_linkedin,
-        "projects_mentioned": projects_mentioned,
         "email_count": len(info.get("email", [])),
         "phone_count": len(info.get("phone", [])),
         "word_count": wc,
         "skills_count": len(skills),
-        "certifications": info.get("certifications", "No"),
         "achievements": info.get("achievements", "No"),
         "languages": info.get("languages", []),
     }
